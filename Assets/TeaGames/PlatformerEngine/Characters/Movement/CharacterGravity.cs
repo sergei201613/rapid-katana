@@ -9,18 +9,18 @@ namespace TeaGames.PlatformerEngine.Characters
         [SerializeField]
         private float _gravityMultiplier = 3f;
 
-        private CharacterMovement _characterMovement; 
+        private CharacterMovement _movement; 
         private CharacterVelocity _velocity; 
 
         private void Awake()
         {
-            _characterMovement = GetComponent<CharacterMovement>();
+            _movement = GetComponent<CharacterMovement>();
             _velocity = GetComponent<CharacterVelocity>();
         }
 
         private void Update()
         {
-            if (_characterMovement.IsGrounded)
+            if (_movement.IsGrounded)
             {
                 _velocity.Y = Mathf.Lerp(_velocity.Y, 0f, 10f * Time.deltaTime);
                 return;

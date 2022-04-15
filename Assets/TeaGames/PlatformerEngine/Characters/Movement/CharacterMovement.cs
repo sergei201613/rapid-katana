@@ -52,7 +52,9 @@ namespace TeaGames.PlatformerEngine.Characters
         private void ApplyMovement()
         {
             transform.Translate(_velocity.Velocity * Time.deltaTime);
-            print($"pos.x: {transform.position.x} vel.x: {_velocity.X}");
+
+            //print($"pos.x: {transform.position.x:0.00} vel.x: " +
+            //    $"{_velocity.X:0.00} IsGrounded: {IsGrounded}");
         }
 
         private void UpdateAnimation()
@@ -133,7 +135,9 @@ namespace TeaGames.PlatformerEngine.Characters
                     if (_boxCollider.bounds.min.y - hit.bounds.min.y < 0)
                         continue;
 
+                    // TODO: shouldn't be there.
                     _isGrounded = true;
+
                     transform.Translate(dir);
                 }
             }
