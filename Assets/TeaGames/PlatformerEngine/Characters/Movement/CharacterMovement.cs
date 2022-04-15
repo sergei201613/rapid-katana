@@ -10,26 +10,13 @@ namespace TeaGames.PlatformerEngine.Characters
         public bool IsGrounded => _isGrounded;
 
         [SerializeField]
-        private float _speed = 5f;
-
-        [SerializeField]
         private Animator _animator;
-
-        [SerializeField]
-        private SpriteRenderer _sprite;
 
         [SerializeField]
         private LayerMask _collisionLayers;
 
         [SerializeField]
         private LayerMask _platformLayers;
-
-        // TODO: runAcclel and airAccel should be in appropriate states.
-        [SerializeField]
-        private float _runAcceleration = 100;
-
-        [SerializeField]
-        private float _airAcceleration = 50;
 
         private CharacterMovementState _state;
         private CharacterMovementAnalyzer _movementAnalyzer;
@@ -52,13 +39,20 @@ namespace TeaGames.PlatformerEngine.Characters
 
         private void Update()
         {
-            HandleMovement();
+            ApplyMovement();
+
             UpdateIsGrounded();
+
             ResolveCollisions();
             ResolvePlatformCollisions();
 
-            RotateToMovementDirection();
             UpdateAnimation();
+        }
+
+        private void ApplyMovement()
+        {
+            transform.Translate(_velocity.Velocity * Time.deltaTime);
+            print($"pos.x: {transform.position.x} vel.x: {_velocity.X}");
         }
 
         private void UpdateAnimation()
@@ -70,15 +64,6 @@ namespace TeaGames.PlatformerEngine.Characters
                 _movementAnalyzer.MovementDelta.y);
 
             _animator.SetBool(_animIsGrounded, _isGrounded);
-        }
-
-        private void RotateToMovementDirection()
-        {
-            if (_velocity.X > .001f)
-                _sprite.flipX = false;
-
-            if (_velocity.X < -.001)
-                _sprite.flipX = true;
         }
 
         private void UpdateIsGrounded()
@@ -154,20 +139,6 @@ namespace TeaGames.PlatformerEngine.Characters
             }
 
             _boxCollPrevBoundsMinY = _boxCollider.bounds.min.y;
-        }
-
-        private void HandleMovement()
-        {
-            // TODO: Should get the input from other component.
-            float moveInput = Input.GetAxisRaw("Horizontal");
-
-            float acceleration = _isGrounded ? _runAcceleration :
-                _airAcceleration;
-
-            _velocity.X = Mathf.MoveTowards(_velocity.X, _speed * moveInput,
-                acceleration * Time.deltaTime);
-
-            transform.Translate(_velocity.Velocity * Time.deltaTime);
         }
     }
 }

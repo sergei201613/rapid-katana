@@ -4,7 +4,7 @@ namespace TeaGames.PlatformerEngine.Characters
 {
     [RequireComponent(typeof(CharacterMovement))]
     [RequireComponent(typeof(CharacterVelocity))]
-    public class CharacterJump : MonoBehaviour
+    public class CharacterJump : CharacterAbility
     {
         [SerializeField]
         private float _jumpHeight = 9f;

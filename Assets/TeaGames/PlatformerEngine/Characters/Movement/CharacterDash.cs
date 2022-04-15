@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace TeaGames.PlatformerEngine.Characters
 {
-    public class CharacterDash : MonoBehaviour
+    [RequireComponent(typeof(CharacterVelocity))]
+    public class CharacterDash : CharacterAbility
     {
         [SerializeField]
         private float _doubleClickMaxTime = .2f;
@@ -16,17 +17,32 @@ namespace TeaGames.PlatformerEngine.Characters
         [SerializeField]
         private float _cooldown = 1f;
 
+        [SerializeField]
+        private CharacterAbility[] _abilitiesToDisableWhenDashing;
+
+        /// <summary>
+        /// Delay before "abilities to disable when dashing" will enabled when dash over.
+        /// </summary>
+        [SerializeField]
+        private float _abilitiesCooldown;
+
+        private CharacterVelocity _velocity;
         private float _lastTimeLeftPressed = float.MinValue;
         private float _lastTimeRightPressed = float.MinValue;
-        // TODO: Maybe i don't need CharacterVelocity component?
-        private Vector2 _velocity;
-        private float _lastTimeDash = float.MinValue;
+        private float _lastTimeDashed = float.MinValue;
+        private bool _isDashing = false;
+
+        private void Awake()
+        {
+            _velocity = GetComponent<CharacterVelocity>();
+        }
 
         private void Update()
         {
-            if (Time.time - _lastTimeDash > _duration)
+            if (Time.time - _lastTimeDashed > _duration)
             {
-                _velocity = Vector2.zero;
+                if (_isDashing)
+                    EndDash();
             }
 
             // TODO: Use new InputSystem?
@@ -34,7 +50,7 @@ namespace TeaGames.PlatformerEngine.Characters
             {
                 if (Time.time - _lastTimeRightPressed < _doubleClickMaxTime)
                 {
-                    TryDash(1f);
+                    TryStartDash(1f);
                 }
 
                 _lastTimeRightPressed = Time.time;
@@ -43,26 +59,39 @@ namespace TeaGames.PlatformerEngine.Characters
             {
                 if (Time.time - _lastTimeLeftPressed < _doubleClickMaxTime)
                 {
-                    TryDash(-1f);
+                    TryStartDash(-1f);
                 }
 
                 _lastTimeLeftPressed = Time.time;
             }
-
-            transform.Translate(_velocity * Time.deltaTime);
         }
 
-        private void TryDash(float dir)
+        private void TryStartDash(float dir)
         {
-            if (Time.time - _lastTimeDash > _cooldown)
-                Dash(dir);
+            if (Time.time - _lastTimeDashed > _cooldown)
+                StartDash(dir);
         }
 
-        private void Dash(float dir)
+        private void StartDash(float dir)
         {
-            // TODO: While is dashing i need to stop movement.
-            _velocity.x += _speed * dir;
-            _lastTimeDash = Time.time;
+            SetMovementEnabled(false);
+
+            _velocity.X += _speed * dir;
+            _lastTimeDashed = Time.time;
+            _isDashing = true;
+        }
+
+        private void EndDash()
+        {
+            _isDashing = false;
+
+            SetMovementEnabled(true);
+        }
+
+        private void SetMovementEnabled(bool val)
+        {
+            foreach (var component in _abilitiesToDisableWhenDashing)
+                component.enabled = val; 
         }
     }
 }
