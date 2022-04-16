@@ -18,7 +18,12 @@ namespace TeaGames.PlatformerEngine.Characters
         private LayerMask _platformLayers;
 
         [SerializeField]
+        private SpriteRenderer _sprite;
+
+        [SerializeField]
         private float _gravityMultiplier = 3f;
+
+        [Header("Jump")]
 
         [SerializeField]
         private float _jumpHeight = 9f;
@@ -26,17 +31,35 @@ namespace TeaGames.PlatformerEngine.Characters
         [SerializeField]
         private int _maxAirJumps = 1;
 
-        [SerializeField]
-        private float _speed = 5f;
+        [Header("Horizontal movement")]
 
         [SerializeField]
-        private SpriteRenderer _sprite;
+        private float _speed = 5f;
 
         [SerializeField]
         private float _runAcceleration = 100;
 
         [SerializeField]
         private float _airAcceleration = 50;
+
+        [Header("Dash")]
+
+        [SerializeField]
+        private float _dashDblClickMaxTime = .2f;
+
+        [SerializeField]
+        private float _dashSpeed = 100f;
+
+        [SerializeField]
+        private float _dashDuration = .5f;
+
+        [SerializeField]
+        private float _dashCooldown = 1f;
+
+        private float _lastTimeLeftDashPressed = float.MinValue;
+        private float _lastTimeRightDashPressed = float.MinValue;
+        private float _lastTimeDashed = float.MinValue;
+        private bool _isDashing = false;
 
         private CharacterMovementState _state;
         private CharacterMovementAnalyzer _movementAnalyzer;
@@ -46,6 +69,8 @@ namespace TeaGames.PlatformerEngine.Characters
         private float _boxCollPrevBoundsMinY;
         private int _airJumps = 0;
         private bool _isGrounded;
+        private bool _canHorizontalMovement = true;
+        private bool _canJump = true;
 
         private readonly int _animVelocityX = Animator.StringToHash("VelocityX");
         private readonly int _animVelocityY = Animator.StringToHash("VelocityY");
@@ -65,6 +90,7 @@ namespace TeaGames.PlatformerEngine.Characters
             AddGravityVel();
             HandleJumpVel();
             HandleMovementVel();
+            HandleDashVel();
 
             ApplyVelocity();
 
@@ -73,7 +99,7 @@ namespace TeaGames.PlatformerEngine.Characters
             ResolveCollisions();
             ResolvePlatformCollisions();
 
-            CorrectVelocity();
+            FixVelocity();
 
             RotateToMovementDirection();
             UpdateAnimation();
@@ -83,6 +109,9 @@ namespace TeaGames.PlatformerEngine.Characters
 
         private void HandleJumpVel()
         {
+            if (!_canJump)
+                return;
+
             // TODO: Get input from other script.
             if (Input.GetButtonDown("Jump"))
             {
@@ -90,7 +119,7 @@ namespace TeaGames.PlatformerEngine.Characters
             }
         }
 
-        private void CorrectVelocity()
+        private void FixVelocity()
         {
             _velocity = ((Vector2)transform.position - _prevPos) / Time.deltaTime;
         }
@@ -129,6 +158,9 @@ namespace TeaGames.PlatformerEngine.Characters
 
         private void HandleMovementVel()
         {
+            if (!_canHorizontalMovement)
+                return;
+
             // TODO: Should get the input from other component.
             float moveInput = Input.GetAxisRaw("Horizontal");
 
@@ -137,6 +169,61 @@ namespace TeaGames.PlatformerEngine.Characters
 
             _velocity.x = Mathf.MoveTowards(_velocity.x, _speed * moveInput,
                 acceleration * Time.deltaTime);
+        }
+
+        private void HandleDashVel()
+        {
+            if (!_isGrounded)
+                return;
+
+            if (Time.time - _lastTimeDashed > _dashDuration)
+            {
+                if (_isDashing)
+                    EndDash();
+            }
+
+            if (Input.GetKeyDown(KeyCode.D))
+            {
+                if (Time.time - _lastTimeRightDashPressed < _dashDblClickMaxTime)
+                {
+                    TryStartDash(1f);
+                }
+
+                _lastTimeRightDashPressed = Time.time;
+            }
+            else if (Input.GetKeyDown(KeyCode.A))
+            {
+                if (Time.time - _lastTimeLeftDashPressed < _dashDblClickMaxTime)
+                {
+                    TryStartDash(-1f);
+                }
+
+                _lastTimeLeftDashPressed = Time.time;
+            }
+        }
+
+        private void TryStartDash(float dir)
+        {
+            if (Time.time - _lastTimeDashed > _dashCooldown)
+                StartDash(dir);
+        }
+
+        private void StartDash(float dir)
+        {
+            _canJump = false;
+            _canHorizontalMovement = false;
+
+            _velocity.x += _dashSpeed * dir;
+            _lastTimeDashed = Time.time;
+            _isDashing = true;
+        }
+
+        private void EndDash()
+        {
+            _isDashing = false;
+
+            _canJump = true;
+            _canHorizontalMovement = true;
         }
 
         private void RotateToMovementDirection()
