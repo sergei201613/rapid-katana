@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace TeaGames.PlatformerEngine.Characters
@@ -71,11 +72,16 @@ namespace TeaGames.PlatformerEngine.Characters
         private bool _isGrounded;
         private bool _canHorizontalMovement = true;
         private bool _canJump = true;
+        private bool _isGravityActive = true;
+        private int _currentAnim;
 
         private readonly int _animVelocityX = Animator.StringToHash("VelocityX");
         private readonly int _animVelocityY = Animator.StringToHash("VelocityY");
         private readonly int _animIsGrounded = Animator.StringToHash("IsGrounded");
         private readonly int _animJump = Animator.StringToHash("Jump");
+        private readonly int _animRun = Animator.StringToHash("Run");
+        private readonly int _animIdle = Animator.StringToHash("Idle");
+        private readonly int _animIsDashing = Animator.StringToHash("IsDashing");
 
         private void Awake()
         {
@@ -102,9 +108,24 @@ namespace TeaGames.PlatformerEngine.Characters
             FixVelocity();
 
             RotateToMovementDirection();
-            UpdateAnimation();
+            UpdateAnimations();
 
             _prevPos = transform.position;
+        }
+
+        public void SetMovementEnabled(bool value)
+        {
+            _canHorizontalMovement = value;
+        }
+
+        public void SetJumpingEnabled(bool value)
+        {
+            _canJump = value;
+        }
+
+        public void StopMovement()
+        {
+            _velocity.x = 0;
         }
 
         private void HandleJumpVel()
@@ -131,6 +152,9 @@ namespace TeaGames.PlatformerEngine.Characters
 
         private void AddGravityVel()
         {
+            if (!_isGravityActive)
+                return;
+
             _velocity.y += Physics2D.gravity.y * _gravityMultiplier * 
                 Time.deltaTime;
         }
@@ -147,7 +171,7 @@ namespace TeaGames.PlatformerEngine.Characters
                 _airJumps++;
             }
 
-            _animator.SetTrigger(_animJump);
+            SwitchAnimation(_animJump);
 
             void ApplyVelocity()
             {
@@ -173,9 +197,6 @@ namespace TeaGames.PlatformerEngine.Characters
 
         private void HandleDashVel()
         {
-            if (!_isGrounded)
-                return;
-
             if (Time.time - _lastTimeDashed > _dashDuration)
             {
                 if (_isDashing)
@@ -212,8 +233,11 @@ namespace TeaGames.PlatformerEngine.Characters
         {
             _canJump = false;
             _canHorizontalMovement = false;
+            _isGravityActive = false;
 
             _velocity.x += _dashSpeed * dir;
+            _velocity.y = 0;
+
             _lastTimeDashed = Time.time;
             _isDashing = true;
         }
@@ -224,6 +248,9 @@ namespace TeaGames.PlatformerEngine.Characters
 
             _canJump = true;
             _canHorizontalMovement = true;
+            _isGravityActive = true;
+
+            _velocity.x = 0;
         }
 
         private void RotateToMovementDirection()
@@ -235,15 +262,30 @@ namespace TeaGames.PlatformerEngine.Characters
                 _sprite.flipX = true;
         }
 
-        private void UpdateAnimation()
+        private void UpdateAnimations()
         {
-            _animator.SetFloat(_animVelocityX, 
-                Mathf.Abs(_movementAnalyzer.MovementDelta.x));
+            if (Mathf.Abs(_movementAnalyzer.MovementDelta.x) > .1f)
+                SwitchAnimation(_animRun);
+            else
+                SwitchAnimation(_animIdle);
 
-            _animator.SetFloat(_animVelocityY, 
-                _movementAnalyzer.MovementDelta.y);
+            //_animator.SetFloat(_animVelocityX, 
+            //    Mathf.Abs(_movementAnalyzer.MovementDelta.x));
 
-            _animator.SetBool(_animIsGrounded, _isGrounded);
+            //_animator.SetFloat(_animVelocityY, 
+            //    _movementAnalyzer.MovementDelta.y);
+
+            //_animator.SetBool(_animIsGrounded, _isGrounded);
+            //_animator.SetBool(_animIsDashing, _isDashing);
+        }
+
+        private void SwitchAnimation(int anim)
+        {
+            if (_currentAnim == anim)
+                return;
+
+            _animator.Play(anim);
+            _currentAnim = anim;
         }
 
         private void UpdateIsGrounded()

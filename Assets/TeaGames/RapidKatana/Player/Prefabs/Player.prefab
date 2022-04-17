@@ -43,7 +43,7 @@ Animator:
   m_GameObject: {fileID: 6246723283014461125}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: cf2ad0f6c4b4eaa45bec6c89cca4b1d3, type: 2}
+  m_Controller: {fileID: 9100000, guid: 3af7299cbb204ee4391d43eb5eaff90a, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -207,9 +207,9 @@ MonoBehaviour:
   _speed: 5
   _runAcceleration: 100
   _airAcceleration: 50
-  _dashDblClickMaxTime: 0.2
+  _dashDblClickMaxTime: 0.25
   _dashSpeed: 35
-  _dashDuration: 0.01
+  _dashDuration: 0.2
   _dashCooldown: 1
 --- !u!114 &4934667181243760676
 MonoBehaviour:
@@ -236,6 +236,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _cooldown: 0.2
+  _movementCooldown: 0.2
   _animator: {fileID: 6246723283014461126}
 --- !u!61 &6246723283067648864
 BoxCollider2D:
