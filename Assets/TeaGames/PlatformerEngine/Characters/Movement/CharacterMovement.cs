@@ -185,7 +185,7 @@ namespace TeaGames.PlatformerEngine.Characters
                 _airJumps++;
             }
 
-            SetState(new MovementStateJump(this));
+            _state.HandleTransitionTo(new MovementStateJump(this));
 
             void ApplyVelocity()
             {

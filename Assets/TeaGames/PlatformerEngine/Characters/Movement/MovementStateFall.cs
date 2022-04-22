@@ -13,6 +13,11 @@ namespace TeaGames.PlatformerEngine.Characters
             return Animator.StringToHash("Fall");
         }
 
+        public override MovementType GetMovementType()
+        {
+            return MovementType.Fall;
+        }
+
         public override void Update()
         {
             HandleTransitionToRun();

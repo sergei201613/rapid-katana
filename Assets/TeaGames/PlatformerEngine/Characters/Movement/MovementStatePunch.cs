@@ -13,6 +13,11 @@ namespace TeaGames.PlatformerEngine.Characters
             return Animator.StringToHash("Punch");
         }
 
+        public override MovementType GetMovementType()
+        {
+            return MovementType.Punch;
+        }
+
         public override void Update()
         {
         }

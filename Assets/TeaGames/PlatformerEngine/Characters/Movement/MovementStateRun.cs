@@ -13,6 +13,11 @@ namespace TeaGames.PlatformerEngine.Characters
             return Animator.StringToHash("Run");
         }
 
+        public override MovementType GetMovementType()
+        {
+            return MovementType.Run;
+        }
+
         public override void Update()
         {
             HandleTransitionToIdle();

@@ -14,6 +14,11 @@ namespace TeaGames.PlatformerEngine.Characters
             return Animator.StringToHash("Dash");
         }
 
+        public override MovementType GetMovementType()
+        {
+            return MovementType.Dash;
+        }
+
         public override void Update()
         {
         }

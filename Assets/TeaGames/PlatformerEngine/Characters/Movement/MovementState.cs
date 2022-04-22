@@ -21,6 +21,13 @@ namespace TeaGames.PlatformerEngine.Characters
 
         public abstract int GetAnimationHash();
 
+        public abstract MovementType GetMovementType();
+
+        public virtual void HandleTransitionTo(MovementState state)
+        {
+            Movement.SetState(state);
+        }
+
         protected virtual void HandleTransitionToIdle()
         {
             if (!IsGrounded)
