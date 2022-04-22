@@ -1,13 +1,14 @@
-using System;
 using UnityEngine;
 
 namespace TeaGames.PlatformerEngine.Characters
 {
     [RequireComponent(typeof(BoxCollider2D))]
-    [RequireComponent(typeof(CharacterMovementAnalyzer))]
     public class CharacterMovement : MonoBehaviour
     {
+        public Vector2 Velocity => _velocity;
+        public Vector2 Delta => _delta;
         public bool IsGrounded => _isGrounded;
+        public bool IsDashing => _isDashing;
 
         [SerializeField]
         private Animator _animator;
@@ -62,33 +63,25 @@ namespace TeaGames.PlatformerEngine.Characters
         private float _lastTimeDashed = float.MinValue;
         private bool _isDashing = false;
 
-        private CharacterMovementState _state;
-        private CharacterMovementAnalyzer _movementAnalyzer;
+        private MovementState _state;
         private BoxCollider2D _boxCollider;
-        private Vector2 _velocity;
+        private Vector2 _delta;
         private Vector2 _prevPos;
+        private Vector2 _velocity;
         private float _boxCollPrevBoundsMinY;
         private int _airJumps = 0;
-        private bool _isGrounded;
         private bool _canHorizontalMovement = true;
         private bool _canJump = true;
         private bool _isGravityActive = true;
-        private int _currentAnim;
-
-        private readonly int _animVelocityX = Animator.StringToHash("VelocityX");
-        private readonly int _animVelocityY = Animator.StringToHash("VelocityY");
-        private readonly int _animIsGrounded = Animator.StringToHash("IsGrounded");
-        private readonly int _animJump = Animator.StringToHash("Jump");
-        private readonly int _animRun = Animator.StringToHash("Run");
-        private readonly int _animIdle = Animator.StringToHash("Idle");
-        private readonly int _animIsDashing = Animator.StringToHash("IsDashing");
+        private bool _isGrounded;
 
         private void Awake()
         {
             _boxCollider = GetComponent<BoxCollider2D>(); 
-            _movementAnalyzer = GetComponent<CharacterMovementAnalyzer>(); 
 
-            _state = new CharacterMovementStateIdle();
+            _prevPos = transform.position;
+
+            _state = new MovementStateIdle(this);
         }
 
         private void Update()
@@ -102,15 +95,22 @@ namespace TeaGames.PlatformerEngine.Characters
 
             UpdateIsGrounded();
 
-            ResolveCollisions();
+            // TODO: Bad hardcoding.
+            for (int i = 0; i < 4; i++)
+                ResolveCollisions();
+
             ResolvePlatformCollisions();
-
             FixVelocity();
-
             RotateToMovementDirection();
-            UpdateAnimations();
 
-            _prevPos = transform.position;
+            _state.Update();
+
+            UpdateMovementDelta();
+        }
+
+        public void SetState(MovementState stateToTransition)
+        {
+            _state = stateToTransition;
         }
 
         public void SetMovementEnabled(bool value)
@@ -128,6 +128,11 @@ namespace TeaGames.PlatformerEngine.Characters
             _velocity.x = 0;
         }
 
+        public void PlayAnimation(int anim)
+        {
+            _animator.Play(anim, -1, 0);
+        }
+
         private void HandleJumpVel()
         {
             if (!_canJump)
@@ -138,6 +143,14 @@ namespace TeaGames.PlatformerEngine.Characters
             {
                 AddJumpVelocity();
             }
+        }
+
+        private void UpdateMovementDelta()
+        {
+            _delta = ((Vector2)transform.position - _prevPos) /
+                Time.deltaTime;
+
+            _prevPos = transform.position;
         }
 
         private void FixVelocity()
@@ -158,7 +171,8 @@ namespace TeaGames.PlatformerEngine.Characters
             _velocity.y += Physics2D.gravity.y * _gravityMultiplier * 
                 Time.deltaTime;
         }
-        public void AddJumpVelocity()
+
+        private void AddJumpVelocity()
         {
             if (_isGrounded)
             {
@@ -171,7 +185,7 @@ namespace TeaGames.PlatformerEngine.Characters
                 _airJumps++;
             }
 
-            SwitchAnimation(_animJump);
+            SetState(new MovementStateJump(this));
 
             void ApplyVelocity()
             {
@@ -262,32 +276,6 @@ namespace TeaGames.PlatformerEngine.Characters
                 _sprite.flipX = true;
         }
 
-        private void UpdateAnimations()
-        {
-            if (Mathf.Abs(_movementAnalyzer.MovementDelta.x) > .1f)
-                SwitchAnimation(_animRun);
-            else
-                SwitchAnimation(_animIdle);
-
-            //_animator.SetFloat(_animVelocityX, 
-            //    Mathf.Abs(_movementAnalyzer.MovementDelta.x));
-
-            //_animator.SetFloat(_animVelocityY, 
-            //    _movementAnalyzer.MovementDelta.y);
-
-            //_animator.SetBool(_animIsGrounded, _isGrounded);
-            //_animator.SetBool(_animIsDashing, _isDashing);
-        }
-
-        private void SwitchAnimation(int anim)
-        {
-            if (_currentAnim == anim)
-                return;
-
-            _animator.Play(anim);
-            _currentAnim = anim;
-        }
-
         private void UpdateIsGrounded()
         {
             var hits = Physics2D.OverlapBoxAll(_boxCollider.transform.position,
@@ -307,7 +295,7 @@ namespace TeaGames.PlatformerEngine.Characters
                     float angle = Vector2.Angle(colliderDistance.normal, 
                         Vector2.up);
 
-                    if (angle < 90f)
+                    if (angle < 45)
                         _isGrounded = true;
                 }
             }
