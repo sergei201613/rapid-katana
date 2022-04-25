@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace TeaGames.PlatformerEngine.Characters
 {
-    public class MovementStateDash : MovementState
+    public class MovementStateDash : CharacterAnimationState
     {
         public MovementStateDash(CharacterMovement movement) : base(movement)
         {

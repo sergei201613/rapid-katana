@@ -2,7 +2,7 @@
 
 namespace TeaGames.PlatformerEngine.Characters
 {
-    public class MovementStateIdle : MovementState
+    public class MovementStateIdle : CharacterAnimationState
     {
         public MovementStateIdle(CharacterMovement movement) : base(movement)
         {

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace TeaGames.PlatformerEngine.Characters
 {
-    public abstract class MovementState
+    public abstract class CharacterAnimationState : Animation.AnimationState
     {
         protected Vector2 Velocity => Movement.Velocity;
         protected bool IsGrounded => Movement.IsGrounded;
@@ -10,11 +10,14 @@ namespace TeaGames.PlatformerEngine.Characters
         protected bool IsFalling => Velocity.y < -3f;
 
         protected CharacterMovement Movement;
+        protected Animator Animator;
 
-        public MovementState(CharacterMovement movement)
+        public CharacterAnimationState(CharacterMovement movement)
         {
             Movement = movement;
-            movement.PlayAnimation(GetAnimationHash());
+            Animator = movement.Animator;
+
+            Animator.Play(GetAnimationHash(), -1, 0);
         }
 
         public abstract void Update();
@@ -23,7 +26,7 @@ namespace TeaGames.PlatformerEngine.Characters
 
         public abstract MovementType GetMovementType();
 
-        public virtual void HandleTransitionTo(MovementState state)
+        public virtual void HandleTransitionTo(CharacterAnimationState state)
         {
             Movement.SetState(state);
         }

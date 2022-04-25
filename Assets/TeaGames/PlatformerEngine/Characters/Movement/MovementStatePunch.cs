@@ -2,7 +2,7 @@
 
 namespace TeaGames.PlatformerEngine.Characters
 {
-    public class MovementStatePunch : MovementState
+    public class MovementStatePunch : CharacterAnimationState
     {
         public MovementStatePunch(CharacterMovement movement) : base(movement)
         {
@@ -20,6 +20,11 @@ namespace TeaGames.PlatformerEngine.Characters
 
         public override void Update()
         {
+            // TODO: if (!AnimOver) return;
+
+            HandleTransitionToRun();
+            HandleTransitionToIdle();
+            HandleTransitionToFall();
         }
     }
 }

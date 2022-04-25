@@ -11,12 +11,8 @@ namespace TeaGames.PlatformerEngine.Characters
         [SerializeField]
         private float _movementCooldown = .1f;
 
-        [SerializeField]
-        private Animator _animator;
-
         private CharacterMovement _movement;
         private float _lastTimePunch = float.MinValue;
-        private readonly int _animPunch = Animator.StringToHash("Punch");
 
         private void Awake()
         {
@@ -47,7 +43,8 @@ namespace TeaGames.PlatformerEngine.Characters
             _movement.SetMovementEnabled(false);
             _movement.SetJumpingEnabled(false);
 
-            _animator.SetTrigger(_animPunch);
+            _movement.State.HandleTransitionTo(new MovementStatePunch(_movement));
+
             _lastTimePunch = Time.time;
         }
     }

@@ -5,10 +5,10 @@ namespace TeaGames.PlatformerEngine.Characters
     [RequireComponent(typeof(BoxCollider2D))]
     public class CharacterMovement : MonoBehaviour
     {
+        public CharacterAnimationState State => _state;
+        public Animator Animator => _animator;
         public Vector2 Velocity => _velocity;
-        public Vector2 Delta => _delta;
         public bool IsGrounded => _isGrounded;
-        public bool IsDashing => _isDashing;
 
         [SerializeField]
         private Animator _animator;
@@ -63,7 +63,7 @@ namespace TeaGames.PlatformerEngine.Characters
         private float _lastTimeDashed = float.MinValue;
         private bool _isDashing = false;
 
-        private MovementState _state;
+        private CharacterAnimationState _state;
         private BoxCollider2D _boxCollider;
         private Vector2 _delta;
         private Vector2 _prevPos;
@@ -86,29 +86,25 @@ namespace TeaGames.PlatformerEngine.Characters
 
         private void Update()
         {
-            AddGravityVel();
-            HandleJumpVel();
-            HandleMovementVel();
-            HandleDashVel();
+            HandleGravity();
+            HandleMovement();
+            HandleDash();
+            HandleJump();
 
             ApplyVelocity();
 
-            UpdateIsGrounded();
+            ResolveCollisions(2);
+            ResolvePlatformCollisions(2);
 
-            // TODO: Bad hardcoding.
-            for (int i = 0; i < 4; i++)
-                ResolveCollisions();
-
-            ResolvePlatformCollisions();
             FixVelocity();
-            RotateToMovementDirection();
 
+            RotateToMovementDirection();
             _state.Update();
 
             UpdateMovementDelta();
         }
 
-        public void SetState(MovementState stateToTransition)
+        public void SetState(CharacterAnimationState stateToTransition)
         {
             _state = stateToTransition;
         }
@@ -128,12 +124,7 @@ namespace TeaGames.PlatformerEngine.Characters
             _velocity.x = 0;
         }
 
-        public void PlayAnimation(int anim)
-        {
-            _animator.Play(anim, -1, 0);
-        }
-
-        private void HandleJumpVel()
+        private void HandleJump()
         {
             if (!_canJump)
                 return;
@@ -163,7 +154,7 @@ namespace TeaGames.PlatformerEngine.Characters
             transform.Translate(_velocity * Time.deltaTime);
         }
 
-        private void AddGravityVel()
+        private void HandleGravity()
         {
             if (!_isGravityActive)
                 return;
@@ -177,7 +168,9 @@ namespace TeaGames.PlatformerEngine.Characters
             if (_isGrounded)
             {
                 ApplyVelocity();
+
                 _airJumps = 0;
+                _isGrounded = false;
             }
             else if (_airJumps < _maxAirJumps)
             {
@@ -194,7 +187,7 @@ namespace TeaGames.PlatformerEngine.Characters
             }
         }
 
-        private void HandleMovementVel()
+        private void HandleMovement()
         {
             if (!_canHorizontalMovement)
                 return;
@@ -209,7 +202,7 @@ namespace TeaGames.PlatformerEngine.Characters
                 acceleration * Time.deltaTime);
         }
 
-        private void HandleDashVel()
+        private void HandleDash()
         {
             if (Time.time - _lastTimeDashed > _dashDuration)
             {
@@ -274,83 +267,71 @@ namespace TeaGames.PlatformerEngine.Characters
 
             if (_velocity.x < -.01)
                 _sprite.flipX = true;
+        }        
+
+        private void ResolveCollisions(int iterations)
+        {
+            for (int i = 0; i < iterations; i++)
+            {
+                var hits = Physics2D.OverlapBoxAll(transform.position,
+                    _boxCollider.size, 0, _collisionLayers);
+
+                _isGrounded = false;
+
+                foreach (var hit in hits)
+                {
+                    if (hit == _boxCollider)
+                        continue;
+
+                    var colliderDistance = hit.Distance(_boxCollider);
+
+                    if (colliderDistance.isOverlapped)
+                    {
+                        float angle = Vector2.Angle(colliderDistance.normal, 
+                            Vector2.up);
+
+                        if (angle < 45)
+                            _isGrounded = true;
+
+                        transform.Translate(colliderDistance.pointA -
+                            colliderDistance.pointB);
+                    }
+                }
+            }
         }
 
-        private void UpdateIsGrounded()
+        private void ResolvePlatformCollisions(int iterations)
         {
-            var hits = Physics2D.OverlapBoxAll(_boxCollider.transform.position,
-                _boxCollider.size, 0, _collisionLayers);
-
-            _isGrounded = false;
-
-            foreach (var hit in hits)
+            for (int i = 0; i < iterations; i++)
             {
-                if (hit == _boxCollider)
-                    continue;
+                var hits = Physics2D.OverlapBoxAll(transform.position,
+                    _boxCollider.size, 0, _platformLayers);
 
-                var colliderDistance = hit.Distance(_boxCollider);
-
-                if (colliderDistance.isOverlapped)
+                foreach (var hit in hits)
                 {
-                    float angle = Vector2.Angle(colliderDistance.normal, 
-                        Vector2.up);
+                    if (hit == _boxCollider)
+                        continue;
 
-                    if (angle < 45)
+                    var colliderDistance = hit.Distance(_boxCollider);
+
+                    if (colliderDistance.isOverlapped)
+                    {
+                        Vector2 dir = colliderDistance.pointA - colliderDistance.pointB;
+
+                        if (_boxCollPrevBoundsMinY - hit.bounds.max.y < 0)
+                            continue;
+
+                        if (_boxCollider.bounds.min.y - hit.bounds.min.y < 0)
+                            continue;
+
                         _isGrounded = true;
+
+                        transform.Translate(dir);
+                    }
                 }
+
+                _boxCollPrevBoundsMinY = _boxCollider.bounds.min.y;
             }
-        }
-
-        private void ResolveCollisions()
-        {
-            var hits = Physics2D.OverlapBoxAll(transform.position,
-                _boxCollider.size, 0, _collisionLayers);
-
-            foreach (var hit in hits)
-            {
-                if (hit == _boxCollider)
-                    continue;
-
-                var colliderDistance = hit.Distance(_boxCollider);
-
-                if (colliderDistance.isOverlapped)
-                {
-                    transform.Translate(colliderDistance.pointA -
-                        colliderDistance.pointB);
-                }
-            }
-        }
-
-        private void ResolvePlatformCollisions()
-        {
-            var hits = Physics2D.OverlapBoxAll(transform.position,
-                _boxCollider.size, 0, _platformLayers);
-
-            foreach (var hit in hits)
-            {
-                if (hit == _boxCollider)
-                    continue;
-
-                var colliderDistance = hit.Distance(_boxCollider);
-
-                if (colliderDistance.isOverlapped)
-                {
-                    Vector2 dir = colliderDistance.pointA - colliderDistance.pointB;
-
-                    if (_boxCollPrevBoundsMinY - hit.bounds.max.y < 0)
-                        continue;
-
-                    if (_boxCollider.bounds.min.y - hit.bounds.min.y < 0)
-                        continue;
-
-                    // TODO: shouldn't be there.
-                    _isGrounded = true;
-
-                    transform.Translate(dir);
-                }
-            }
-
-            _boxCollPrevBoundsMinY = _boxCollider.bounds.min.y;
         }
     }
 }

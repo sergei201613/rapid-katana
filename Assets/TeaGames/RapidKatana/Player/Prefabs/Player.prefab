@@ -116,9 +116,7 @@ GameObject:
   - component: {fileID: 6246723283067648871}
   - component: {fileID: 6246723283067648865}
   - component: {fileID: 6246723283067648867}
-  - component: {fileID: 3067265650666623045}
   - component: {fileID: 6246723283067648870}
-  - component: {fileID: 4934667181243760676}
   - component: {fileID: 5204973577985007424}
   - component: {fileID: 6246723283067648864}
   m_Layer: 0
@@ -168,19 +166,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b81161483a32e434aaa2e42a3d0c9d6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &3067265650666623045
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6246723283067648868}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d81f794edee14ad4dbf39d7acddb23b3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Velocity: {x: 0, y: 0}
 --- !u!114 &6246723283067648870
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -204,25 +189,13 @@ MonoBehaviour:
   _gravityMultiplier: 5
   _jumpHeight: 14
   _maxAirJumps: 1
-  _speed: 5
+  _speed: 6
   _runAcceleration: 100
   _airAcceleration: 50
   _dashDblClickMaxTime: 0.25
   _dashSpeed: 35
   _dashDuration: 0.2
   _dashCooldown: 1
---- !u!114 &4934667181243760676
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6246723283067648868}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 36e1d3e1171d11c4c89cdd82f38cdc15, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &5204973577985007424
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,8 +209,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _cooldown: 0.2
-  _movementCooldown: 0.2
-  _animator: {fileID: 6246723283014461126}
+  _movementCooldown: 0.25
 --- !u!61 &6246723283067648864
 BoxCollider2D:
   m_ObjectHideFlags: 0
