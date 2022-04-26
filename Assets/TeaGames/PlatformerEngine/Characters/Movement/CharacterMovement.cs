@@ -5,11 +5,6 @@ namespace TeaGames.PlatformerEngine.Characters
     [RequireComponent(typeof(BoxCollider2D))]
     public class CharacterMovement : MonoBehaviour
     {
-        public CharacterAnimationState State => _state;
-        public Animator Animator => _animator;
-        public Vector2 Velocity => _velocity;
-        public bool IsGrounded => _isGrounded;
-
         [SerializeField]
         private Animator _animator;
 
@@ -63,9 +58,7 @@ namespace TeaGames.PlatformerEngine.Characters
         private float _lastTimeDashed = float.MinValue;
         private bool _isDashing = false;
 
-        private CharacterAnimationState _state;
         private BoxCollider2D _boxCollider;
-        private Vector2 _delta;
         private Vector2 _prevPos;
         private Vector2 _velocity;
         private float _boxCollPrevBoundsMinY;
@@ -75,20 +68,28 @@ namespace TeaGames.PlatformerEngine.Characters
         private bool _isGravityActive = true;
         private bool _isGrounded;
 
+        private readonly int _animAbsVelocityX =
+            Animator.StringToHash("AbsVelocityX");
+        private readonly int _animVelocityY =
+            Animator.StringToHash("VelocityY");
+        private readonly int _animIsDashing =
+            Animator.StringToHash("IsDashing");
+        private readonly int _animIsGrounded =
+            Animator.StringToHash("IsGrounded");
+        private readonly int _animJump =
+            Animator.StringToHash("Jump");
+
         private void Awake()
         {
             _boxCollider = GetComponent<BoxCollider2D>(); 
-
             _prevPos = transform.position;
-
-            _state = new MovementStateIdle(this);
         }
 
         private void Update()
         {
             HandleGravity();
-            HandleMovement();
             HandleDash();
+            HandleMovement();
             HandleJump();
 
             ApplyVelocity();
@@ -99,14 +100,9 @@ namespace TeaGames.PlatformerEngine.Characters
             FixVelocity();
 
             RotateToMovementDirection();
-            _state.Update();
+            UpdateAnimData();
 
-            UpdateMovementDelta();
-        }
-
-        public void SetState(CharacterAnimationState stateToTransition)
-        {
-            _state = stateToTransition;
+            _prevPos = transform.position;
         }
 
         public void SetMovementEnabled(bool value)
@@ -119,7 +115,7 @@ namespace TeaGames.PlatformerEngine.Characters
             _canJump = value;
         }
 
-        public void StopMovement()
+        public void StopHorizontalMovement()
         {
             _velocity.x = 0;
         }
@@ -136,12 +132,12 @@ namespace TeaGames.PlatformerEngine.Characters
             }
         }
 
-        private void UpdateMovementDelta()
+        private void UpdateAnimData()
         {
-            _delta = ((Vector2)transform.position - _prevPos) /
-                Time.deltaTime;
-
-            _prevPos = transform.position;
+            _animator.SetFloat(_animAbsVelocityX, Mathf.Abs(_velocity.x));
+            _animator.SetFloat(_animVelocityY, _velocity.y);
+            _animator.SetBool(_animIsDashing, _isDashing);
+            _animator.SetBool(_animIsGrounded, _isGrounded);
         }
 
         private void FixVelocity()
@@ -178,7 +174,7 @@ namespace TeaGames.PlatformerEngine.Characters
                 _airJumps++;
             }
 
-            _state.HandleTransitionTo(new MovementStateJump(this));
+            _animator.SetTrigger(_animJump);
 
             void ApplyVelocity()
             {

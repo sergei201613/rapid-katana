@@ -6,6 +6,9 @@ namespace TeaGames.PlatformerEngine.Characters
     public class CharacterPunch : MonoBehaviour
     {
         [SerializeField]
+        private Animator _animator;
+
+        [SerializeField]
         private float _cooldown = .5f;
         
         [SerializeField]
@@ -13,6 +16,9 @@ namespace TeaGames.PlatformerEngine.Characters
 
         private CharacterMovement _movement;
         private float _lastTimePunch = float.MinValue;
+
+        private readonly int _animPunch =
+            Animator.StringToHash("Punch");
 
         private void Awake()
         {
@@ -39,11 +45,11 @@ namespace TeaGames.PlatformerEngine.Characters
 
         private void Punch(float dir)
         {
-            _movement.StopMovement();
+            _movement.StopHorizontalMovement();
             _movement.SetMovementEnabled(false);
             _movement.SetJumpingEnabled(false);
 
-            _movement.State.HandleTransitionTo(new MovementStatePunch(_movement));
+            _animator.SetTrigger(_animPunch);
 
             _lastTimePunch = Time.time;
         }
