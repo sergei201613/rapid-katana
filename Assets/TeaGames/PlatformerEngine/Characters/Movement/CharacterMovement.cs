@@ -56,7 +56,7 @@ namespace TeaGames.PlatformerEngine.Characters
         private float _lastTimeLeftDashPressed = float.MinValue;
         private float _lastTimeRightDashPressed = float.MinValue;
         private float _lastTimeDashed = float.MinValue;
-        private bool _isDashing = false;
+        private bool _isDash = false;
 
         private BoxCollider2D _boxCollider;
         private Vector2 _prevPos;
@@ -68,12 +68,12 @@ namespace TeaGames.PlatformerEngine.Characters
         private bool _isGravityActive = true;
         private bool _isGrounded;
 
-        private readonly int _animAbsVelocityX =
-            Animator.StringToHash("AbsVelocityX");
-        private readonly int _animVelocityY =
-            Animator.StringToHash("VelocityY");
-        private readonly int _animIsDashing =
-            Animator.StringToHash("IsDashing");
+        private readonly int _animIsRun =
+            Animator.StringToHash("IsRun");
+        private readonly int _animIsFall =
+            Animator.StringToHash("IsFall");
+        private readonly int _animIsDash =
+            Animator.StringToHash("IsDash");
         private readonly int _animIsGrounded =
             Animator.StringToHash("IsGrounded");
         private readonly int _animJump =
@@ -125,6 +125,9 @@ namespace TeaGames.PlatformerEngine.Characters
             if (!_canJump)
                 return;
 
+            if (_isDash)
+                return;
+
             // TODO: Get input from other script.
             if (Input.GetButtonDown("Jump"))
             {
@@ -134,9 +137,10 @@ namespace TeaGames.PlatformerEngine.Characters
 
         private void UpdateAnimData()
         {
-            _animator.SetFloat(_animAbsVelocityX, Mathf.Abs(_velocity.x));
-            _animator.SetFloat(_animVelocityY, _velocity.y);
-            _animator.SetBool(_animIsDashing, _isDashing);
+            _animator.SetBool(_animIsRun, 
+                Mathf.Abs(_velocity.x) > .01);
+            _animator.SetBool(_animIsFall, _velocity.y < -2);
+            _animator.SetBool(_animIsDash, _isDash);
             _animator.SetBool(_animIsGrounded, _isGrounded);
         }
 
@@ -202,7 +206,7 @@ namespace TeaGames.PlatformerEngine.Characters
         {
             if (Time.time - _lastTimeDashed > _dashDuration)
             {
-                if (_isDashing)
+                if (_isDash)
                     EndDash();
             }
 
@@ -242,12 +246,12 @@ namespace TeaGames.PlatformerEngine.Characters
             _velocity.y = 0;
 
             _lastTimeDashed = Time.time;
-            _isDashing = true;
+            _isDash = true;
         }
 
         private void EndDash()
         {
-            _isDashing = false;
+            _isDash = false;
 
             _canJump = true;
             _canHorizontalMovement = true;
